@@ -27,10 +27,10 @@ static struct dmx_uart_t {
   uart_dev_t *const dev;
   intr_handle_t isr_handle;
 } dmx_uart_context[DMX_NUM_MAX] = {
-  {.num = 0, .dev = UART_LL_GET_HW(0)},
-  {.num = 1, .dev = UART_LL_GET_HW(1)},
+    {.num = 0, .dev = UART_LL_GET_HW(0)},
+    {.num = 1, .dev = UART_LL_GET_HW(1)},
 #if DMX_NUM_MAX > 2
-  {.num = 2, .dev = UART_LL_GET_HW(2)},
+    {.num = 2, .dev = UART_LL_GET_HW(2)},
 #endif
 };
 
@@ -99,7 +99,7 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
         driver->dmx.head = 0;
         taskEXIT_CRITICAL_ISR(DMX_SPINLOCK(dmx_num));
         continue;  // Nothing else to do on DMX break
-      } else if (driver->dmx.progress == DMX_PROGRESS_IN_BREAK || 
+      } else if (driver->dmx.progress == DMX_PROGRESS_IN_BREAK ||
                  driver->dmx.progress == DMX_PROGRESS_IN_MAB) {
         taskENTER_CRITICAL_ISR(DMX_SPINLOCK(dmx_num));
         // UART ISR cannot detect MAB so we go straight to DMX_PROGRESS_IN_DATA
@@ -297,7 +297,7 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
 
       // Skip the rest of the ISR loop if an RDM response is not expected
       if (!driver->is_controller || driver->dmx.last_controller_pid == 0 ||
-          (driver->dmx.last_request_was_broadcast && 
+          (driver->dmx.last_request_was_broadcast &&
            driver->dmx.last_controller_pid != RDM_PID_DISC_UNIQUE_BRANCH)) {
         continue;
       }
