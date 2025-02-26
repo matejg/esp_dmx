@@ -27,10 +27,10 @@ static struct dmx_uart_t {
   uart_dev_t *const dev;
   intr_handle_t isr_handle;
 } dmx_uart_context[DMX_NUM_MAX] = {
-  { .num = 0, .dev = UART_LL_GET_HW(0) },
-  { .num = 1, .dev = UART_LL_GET_HW(1) },
+  {.num = 0, .dev = UART_LL_GET_HW(0)},
+  {.num = 1, .dev = UART_LL_GET_HW(1)},
 #if DMX_NUM_MAX > 2
-  { .num = 2, .dev = UART_LL_GET_HW(2) },
+  {.num = 2, .dev = UART_LL_GET_HW(2)},
 #endif
 };
 
@@ -40,7 +40,7 @@ enum {
   RDM_TYPE_IS_RESPONSE,     // The packet is an RDM response.
   RDM_TYPE_IS_BROADCAST,    // The packet is a non-discovery RDM broadcast.
   RDM_TYPE_IS_REQUEST,      // The packet is a standard RDM request.
-  RDM_TYPE_IS_UNKNOWN,      // The packet is RDM, but it is unclear what type it is.
+  RDM_TYPE_IS_UNKNOWN,  // The packet is RDM, but it is unclear what type it is.
 };
 
 static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
@@ -51,8 +51,7 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
 
   while (true) {
     const uint32_t intr_flags = dmx_uart_get_interrupt_status(dmx_num);
-    if (intr_flags == 0)
-      break;
+    if (intr_flags == 0) break;
 
     // DMX Receive ####################################################
     if (intr_flags & DMX_INTR_RX_ALL) {
@@ -100,7 +99,8 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
         driver->dmx.head = 0;
         taskEXIT_CRITICAL_ISR(DMX_SPINLOCK(dmx_num));
         continue;  // Nothing else to do on DMX break
-      } else if (driver->dmx.progress == DMX_PROGRESS_IN_BREAK || driver->dmx.progress == DMX_PROGRESS_IN_MAB) {
+      } else if (driver->dmx.progress == DMX_PROGRESS_IN_BREAK || 
+                 driver->dmx.progress == DMX_PROGRESS_IN_MAB) {
         taskENTER_CRITICAL_ISR(DMX_SPINLOCK(dmx_num));
         // UART ISR cannot detect MAB so we go straight to DMX_PROGRESS_IN_DATA
         driver->dmx.progress = DMX_PROGRESS_IN_DATA;
@@ -120,8 +120,8 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
         rdm_type = RDM_TYPE_IS_NOT_RDM;
         packet_is_complete = true;
         err = intr_flags & DMX_INTR_RX_FIFO_OVERFLOW
-                ? DMX_ERR_UART_OVERFLOW   // UART overflow
-                : DMX_ERR_IMPROPER_SLOT;  // Missing stop bits
+                  ? DMX_ERR_UART_OVERFLOW   // UART overflow
+                  : DMX_ERR_IMPROPER_SLOT;  // Missing stop bits
       } else {
         // Determine the type of the packet that was received
         const uint8_t sc = driver->dmx.data[0];  // DMX start-code.
@@ -189,7 +189,9 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
           if (dmx_head < sizeof(rdm_header_t) + 2) {
             packet_is_complete = false;
             break;  // Haven't received full RDM header and checksum yet
-          } else if (driver->dmx.data[1] != RDM_SUB_SC || !rdm_cc_is_valid(driver->dmx.data[20]) || (msg_len = driver->dmx.data[2]) < sizeof(rdm_header_t)) {
+          } else if (driver->dmx.data[1] != RDM_SUB_SC ||
+                     !rdm_cc_is_valid(driver->dmx.data[20]) ||
+                     (msg_len = driver->dmx.data[2]) < sizeof(rdm_header_t)) {
             rdm_type = RDM_TYPE_IS_NOT_RDM;
             continue;  // Packet is malformed - treat it as DMX
           } else if (dmx_head < msg_len + 2) {
@@ -203,8 +205,8 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
             const rdm_cc_t cc = driver->dmx.data[20];
             const rdm_pid_t *pid = (rdm_pid_t *)&driver->dmx.data[21];
             const rdm_uid_t *uid_ptr = (rdm_uid_t *)&driver->dmx.data[3];
-            const rdm_uid_t dest_uid = { .man_id = bswap16(uid_ptr->man_id),
-                                         .dev_id = bswap32(uid_ptr->dev_id) };
+            const rdm_uid_t dest_uid = {.man_id = bswap16(uid_ptr->man_id),
+                                        .dev_id = bswap32(uid_ptr->dev_id)};
             if (!rdm_cc_is_request(cc)) {
               rdm_type = RDM_TYPE_IS_RESPONSE;
               responder_sent_last = true;
@@ -294,7 +296,9 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
       taskEXIT_CRITICAL_ISR(DMX_SPINLOCK(dmx_num));
 
       // Skip the rest of the ISR loop if an RDM response is not expected
-      if (!driver->is_controller || driver->dmx.last_controller_pid == 0 || (driver->dmx.last_request_was_broadcast && driver->dmx.last_controller_pid != RDM_PID_DISC_UNIQUE_BRANCH)) {
+      if (!driver->is_controller || driver->dmx.last_controller_pid == 0 ||
+          (driver->dmx.last_request_was_broadcast && 
+           driver->dmx.last_controller_pid != RDM_PID_DISC_UNIQUE_BRANCH)) {
         continue;
       }
 
@@ -317,8 +321,7 @@ static void DMX_ISR_ATTR dmx_uart_isr(void *arg) {
     }
   }
 
-  if (task_awoken)
-    portYIELD_FROM_ISR();
+  if (task_awoken) portYIELD_FROM_ISR();
 }
 
 bool dmx_uart_init(dmx_port_t dmx_num, void *isr_context, int isr_flags) {
@@ -483,8 +486,7 @@ void DMX_ISR_ATTR dmx_uart_write_txfifo(dmx_port_t dmx_num, const void *buf,
                                         int *size) {
   struct dmx_uart_t *uart = &dmx_uart_context[dmx_num];
   const int txfifo_len = uart_ll_get_txfifo_len(uart->dev);
-  if (*size > txfifo_len)
-    *size = txfifo_len;
+  if (*size > txfifo_len) *size = txfifo_len;
   uart_ll_write_txfifo(uart->dev, (uint8_t *)buf, *size);
 }
 
